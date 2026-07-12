@@ -1,5 +1,8 @@
 # AfterMerge
 
+[![CI](https://github.com/PtPetrov/aftermerge/actions/workflows/ci.yml/badge.svg)](https://github.com/PtPetrov/aftermerge/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/PtPetrov/aftermerge?display_name=tag)](https://github.com/PtPetrov/aftermerge/releases/latest)
+
 AfterMerge is an early proof for measuring what happens to a pull request after it merges. It tracks non-blank lines introduced by the PR and reports whether those exact Git line identities remain after 7 and 30 days. It also surfaces explicit reverts and likely follow-up fixes.
 
 The tool deliberately calls the metric **turnover**, not defects. Deleted code can be a regression, a cleanup, or a successful temporary migration. The surrounding signals provide context; they do not replace engineering judgment.
@@ -61,7 +64,7 @@ steps:
   - uses: actions/checkout@v4
     with:
       fetch-depth: 0
-  - uses: PtPetrov/aftermerge@v0.1
+  - uses: PtPetrov/aftermerge@v0.1.0
     with:
       github-token: ${{ github.token }}
 ```
@@ -70,7 +73,7 @@ Put that job on a weekly `schedule` and the report is autonomous. Use the
 optional `pull-request` input for a one-off report. Agent author logins, lookback
 days, and report limit are configurable inputs.
 
-`v0.1` is the stable design-partner branch. `main` remains the development
+`v0.1.0` is the current design-partner release. `main` remains the development
 branch and may change the JSON schema during the proof stage.
 
 The action only asks for read access. It does not post comments or modify the

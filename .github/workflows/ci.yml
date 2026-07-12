@@ -21,3 +21,15 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run build
+
+  smoke-action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./
+        with:
+          github-token: ${{ github.token }}
+          since-days: "1"
+          limit: "1"

@@ -2,6 +2,26 @@
   "name": "aftermerge",
   "version": "0.1.0",
   "description": "Measure the post-merge durability of agent-authored pull requests.",
+  "keywords": [
+    "github-actions",
+    "ai-coding-agents",
+    "engineering-analytics",
+    "pull-requests"
+  ],
+  "homepage": "https://github.com/PtPetrov/aftermerge-#readme",
+  "bugs": {
+    "url": "https://github.com/PtPetrov/aftermerge-/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PtPetrov/aftermerge-.git"
+  },
+  "files": [
+    "dist",
+    "action.yml",
+    "README.md",
+    "LICENSE"
+  ],
   "type": "module",
   "bin": {
     "aftermerge": "dist/cli.js"

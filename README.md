@@ -55,7 +55,7 @@ steps:
   - uses: actions/checkout@v4
     with:
       fetch-depth: 0
-  - uses: PtPetrov/aftermerge-@main
+  - uses: PtPetrov/aftermerge@main
     with:
       github-token: ${{ github.token }}
 ```

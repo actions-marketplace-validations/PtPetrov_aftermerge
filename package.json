@@ -8,13 +8,13 @@
     "engineering-analytics",
     "pull-requests"
   ],
-  "homepage": "https://github.com/PtPetrov/aftermerge-#readme",
+  "homepage": "https://github.com/PtPetrov/aftermerge#readme",
   "bugs": {
-    "url": "https://github.com/PtPetrov/aftermerge-/issues"
+    "url": "https://github.com/PtPetrov/aftermerge/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PtPetrov/aftermerge-.git"
+    "url": "git+https://github.com/PtPetrov/aftermerge.git"
   },
   "files": [
     "dist",

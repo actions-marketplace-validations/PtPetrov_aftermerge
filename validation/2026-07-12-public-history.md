@@ -19,7 +19,7 @@ MATLAB, Kotlin, Java, TypeScript, and Python changes.
 | Explicit reverts detected | 0 |
 
 The successful matrix run is
-[`29183163218`](https://github.com/PtPetrov/aftermerge-/actions/runs/29183163218).
+[`29183163218`](https://github.com/PtPetrov/aftermerge/actions/runs/29183163218).
 
 ## Largest 30-day turnover results
 

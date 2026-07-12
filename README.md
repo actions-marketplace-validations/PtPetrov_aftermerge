@@ -84,12 +84,12 @@ repository.
 
 ## Real-history validation
 
-The first public-history check analyzed
-[`Smidjehoien/json-gotti-maccaevelli#1`](https://github.com/Smidjehoien/json-gotti-maccaevelli/pull/1),
-a merged Copilot PR. It tracked three non-blank added lines; all three survived
-at 7 and 30 days, with no explicit revert or likely-fix signal. Larger public
-repositories still need a broader validation pass before this becomes a hosted
-product.
+The first validation cohort analyzed 20 merged Copilot PRs across 14 public
+repositories. It tracked 34,048 non-blank added lines, with 83.4% weighted
+7-day survival and 82.9% weighted 30-day survival. The median PR retained 97.6%
+of its tracked lines at 30 days. Read the
+[full validation report](validation/2026-07-12-public-history.md), including the
+measurement risks and the high-turnover cases that still need manual audit.
 
 ## Product gate
 

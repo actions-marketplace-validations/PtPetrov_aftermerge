@@ -16,6 +16,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: PtPetrov/aftermerge@main
+      - uses: PtPetrov/aftermerge@v0.1
         with:
           github-token: ${{ github.token }}

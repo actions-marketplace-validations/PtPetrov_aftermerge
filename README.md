@@ -61,7 +61,7 @@ steps:
   - uses: actions/checkout@v4
     with:
       fetch-depth: 0
-  - uses: PtPetrov/aftermerge@main
+  - uses: PtPetrov/aftermerge@v0.1
     with:
       github-token: ${{ github.token }}
 ```
@@ -69,6 +69,9 @@ steps:
 Put that job on a weekly `schedule` and the report is autonomous. Use the
 optional `pull-request` input for a one-off report. Agent author logins, lookback
 days, and report limit are configurable inputs.
+
+`v0.1` is the stable design-partner branch. `main` remains the development
+branch and may change the JSON schema during the proof stage.
 
 The action only asks for read access. It does not post comments or modify the
 repository.

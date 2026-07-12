@@ -196,4 +196,37 @@ describe("analyzePullRequest", () => {
     expect(sevenDay?.explicitReverts).toHaveLength(1);
     expect(sevenDay?.explicitReverts[0]?.subject).toContain("Revert");
   });
+
+  it("falls back to local HEAD when the original base branch was deleted", async () => {
+    const directory = await createRepository();
+    await commitFile(
+      directory,
+      "export const existing = true;\n",
+      "initial",
+      "2026-01-01T12:00:00Z",
+    );
+    const baseline = await commitFile(
+      directory,
+      "export const existing = true;\nexport const agentLine = true;\n",
+      "agent feature",
+      "2026-01-02T12:00:00Z",
+    );
+    await commitFile(
+      directory,
+      "export const existing = true;\nexport const agentLine = true;\nexport const later = true;\n",
+      "later work",
+      "2026-02-05T12:00:00Z",
+    );
+    const pullRequest = metadata(baseline, "2026-01-02T12:00:00Z");
+    pullRequest.baseRef = "deleted-feature-branch";
+
+    const report = await analyzePullRequest(
+      GitRepository.open(directory),
+      pullRequest,
+      { now: new Date("2026-02-10T12:00:00Z") },
+    );
+
+    expect(report.horizons[1]?.status).toBe("ready");
+    expect(report.horizons[1]?.survivalRate).toBe(1);
+  });
 });

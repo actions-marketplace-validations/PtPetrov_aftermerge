@@ -8,6 +8,7 @@ export declare class GitRepository {
     dispose(): Promise<void>;
     ensureCommit(sha: string): Promise<void>;
     resolve(revision: string): Promise<string>;
+    resolveFirst(revisions: string[]): Promise<string>;
     firstParent(commit: string): Promise<string>;
     addedRanges(parent: string, commit: string): Promise<AddedRange[]>;
     blame(commit: string, path: string): Promise<LineIdentity[]>;

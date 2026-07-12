@@ -8,8 +8,13 @@ export async function analyzePullRequest(repository, pullRequest, options = {}) 
     const baseline = pullRequest.mergeCommitSha;
     await repository.ensureCommit(baseline);
     const baselineParent = await repository.firstParent(baseline);
-    const head = options.head ?? `origin/${pullRequest.baseRef}`;
-    const resolvedHead = await repository.resolve(head);
+    const resolvedHead = options.head
+        ? await repository.resolve(options.head)
+        : await repository.resolveFirst([
+            `origin/${pullRequest.baseRef}`,
+            "origin/HEAD",
+            "HEAD",
+        ]);
     const addedRanges = await repository.addedRanges(baselineParent, baseline);
     const trackedFiles = [...new Set(addedRanges.map((range) => range.path))].sort();
     const baselineBlames = new Map();
@@ -74,6 +79,7 @@ export async function analyzePullRequest(repository, pullRequest, options = {}) 
             "The proof tracks non-blank added lines in their original files; cross-file moves may count as turnover.",
             "Likely follow-up fixes are inferred from commit subjects and require human interpretation.",
             "The analyzer measures committed Git history and does not attempt probabilistic AI-code detection.",
+            "If the original base branch was deleted, the analyzer follows the current remote default branch or local HEAD.",
         ],
     };
 }

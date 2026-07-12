@@ -69,6 +69,18 @@ export class GitRepository {
     return (await this.run(["rev-parse", revision])).trim();
   }
 
+  public async resolveFirst(revisions: string[]): Promise<string> {
+    for (const revision of revisions) {
+      const result = await this.run(["rev-parse", "--verify", revision], {
+        allowFailure: true,
+      });
+      if (result.exitCode === 0 && result.stdout.trim()) {
+        return result.stdout.trim();
+      }
+    }
+    throw new Error(`None of these Git revisions exist: ${revisions.join(", ")}`);
+  }
+
   public async firstParent(commit: string): Promise<string> {
     return this.resolve(`${commit}^1`);
   }

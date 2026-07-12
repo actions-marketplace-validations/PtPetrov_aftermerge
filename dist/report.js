@@ -37,6 +37,7 @@ export function renderMarkdown(report) {
         .find((horizon) => horizon.days === 30 && horizon.status === "ready")
         ?.files?.filter((file) => file.turnoverRate > 0)
         .slice(0, 10);
+    const categoryTurnover = report.horizons.find((horizon) => horizon.days === 30 && horizon.status === "ready")?.categories;
     return [
         `# AfterMerge report: ${report.pullRequest.repository}#${report.pullRequest.number}`,
         "",
@@ -49,13 +50,23 @@ export function renderMarkdown(report) {
         "| --- | --- | ---: | ---: | ---: | ---: |",
         ...report.horizons.map(horizonRow),
         "",
+        ...(categoryTurnover && categoryTurnover.length > 0
+            ? [
+                "## 30-day composition",
+                "",
+                "| Category | Tracked lines | Surviving lines | Turnover |",
+                "| --- | ---: | ---: | ---: |",
+                ...categoryTurnover.map((category) => `| ${category.category} | ${category.trackedLines} | ${category.survivingLines} | ${percent(category.turnoverRate)} |`),
+                "",
+            ]
+            : []),
         ...(fileTurnover && fileTurnover.length > 0
             ? [
                 "## Highest 30-day file turnover",
                 "",
-                "| File | Tracked lines | Surviving lines | Turnover |",
-                "| --- | ---: | ---: | ---: |",
-                ...fileTurnover.map((file) => `| \`${file.path.replace(/\|/g, "\\|")}\` | ${file.trackedLines} | ${file.survivingLines} | ${percent(file.turnoverRate)} |`),
+                "| File | Category | Tracked lines | Surviving lines | Turnover |",
+                "| --- | --- | ---: | ---: | ---: |",
+                ...fileTurnover.map((file) => `| \`${file.path.replace(/\|/g, "\\|")}\` | ${file.category} | ${file.trackedLines} | ${file.survivingLines} | ${percent(file.turnoverRate)} |`),
                 "",
             ]
             : []),

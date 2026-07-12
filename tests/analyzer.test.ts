@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
-import { analyzePullRequest } from "../src/analyzer.js";
+import { analyzePullRequest, classifyPath } from "../src/analyzer.js";
 import { GitRepository, parseAddedRanges } from "../src/git.js";
 import type { PullRequestMetadata } from "../src/types.js";
 
@@ -95,6 +95,17 @@ describe("parseAddedRanges", () => {
   });
 });
 
+describe("classifyPath", () => {
+  it("provides conservative context categories without excluding files", () => {
+    expect(classifyPath("src/index.ts")).toBe("source");
+    expect(classifyPath("tests/index.test.ts")).toBe("test");
+    expect(classifyPath("docs/guide.md")).toBe("documentation");
+    expect(classifyPath(".github/workflows/ci.yml")).toBe("configuration");
+    expect(classifyPath("results/Wecsim/end.json")).toBe("generated");
+    expect(classifyPath("dvc.lock")).toBe("generated");
+  });
+});
+
 describe("analyzePullRequest", () => {
   it("measures rewritten and deleted lines as turnover and finds follow-up fixes", async () => {
     const directory = await createRepository();
@@ -159,6 +170,7 @@ describe("analyzePullRequest", () => {
       expect(horizon.files).toEqual([
         expect.objectContaining({
           path: "index.ts",
+          category: "source",
           trackedLines: 3,
           survivingLines: 1,
         }),

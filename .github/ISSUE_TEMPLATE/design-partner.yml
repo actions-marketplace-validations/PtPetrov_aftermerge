@@ -1,0 +1,51 @@
+name: Free AfterMerge design partner
+description: Request a read-only AfterMerge pilot for a team using coding agents.
+title: "[Design partner] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        AfterMerge is selecting five teams for a free read-only pilot. Do not include source code, credentials, or other secrets in this public issue.
+  - type: input
+    id: repository
+    attributes:
+      label: Repository or organization
+      description: A public URL is ideal. For private repositories, provide only the owner/name identifier.
+      placeholder: owner/repository
+    validations:
+      required: true
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Primary coding agent
+      options:
+        - GitHub Copilot
+        - OpenAI Codex
+        - Devin
+        - Internal or custom agent
+        - Multiple agents
+    validations:
+      required: true
+  - type: input
+    id: monthly_volume
+    attributes:
+      label: Approximate agent PRs per month
+      placeholder: "25"
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision you want the report to improve
+      description: For example, where agent use is working, where review policy should change, or where follow-up work is accumulating.
+    validations:
+      required: true
+  - type: checkboxes
+    id: permissions
+    attributes:
+      label: Pilot constraints
+      options:
+        - label: I understand the pilot uses read-only GitHub permissions and reports turnover, not defect rates.
+          required: true
+        - label: I will not post credentials, source code, or other secrets in this issue.
+          required: true

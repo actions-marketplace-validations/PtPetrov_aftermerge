@@ -1,5 +1,6 @@
-import type { DurabilityReport, PullRequestMetadata } from "./types.js";
+import type { DurabilityReport, FileCategory, PullRequestMetadata } from "./types.js";
 import { GitRepository } from "./git.js";
+export declare function classifyPath(path: string): FileCategory;
 export interface AnalyzeOptions {
     horizons?: number[];
     now?: Date;

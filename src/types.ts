@@ -33,8 +33,24 @@ export interface CommitSignal {
   committedAt: string;
 }
 
+export type FileCategory =
+  | "source"
+  | "test"
+  | "configuration"
+  | "documentation"
+  | "generated";
+
 export interface FileHorizonResult {
   path: string;
+  category: FileCategory;
+  trackedLines: number;
+  survivingLines: number;
+  survivalRate: number;
+  turnoverRate: number;
+}
+
+export interface CategoryHorizonResult {
+  category: FileCategory;
   trackedLines: number;
   survivingLines: number;
   survivalRate: number;
@@ -53,6 +69,7 @@ export interface HorizonResult {
   explicitReverts: CommitSignal[];
   likelyFixes: CommitSignal[];
   files?: FileHorizonResult[];
+  categories?: CategoryHorizonResult[];
 }
 
 export interface DurabilityReport {

@@ -55,6 +55,16 @@ describe("renderMarkdown", () => {
           files: [
             {
               path: "src/index.ts",
+              category: "source",
+              trackedLines: 4,
+              survivingLines: 1,
+              survivalRate: 0.25,
+              turnoverRate: 0.75,
+            },
+          ],
+          categories: [
+            {
+              category: "source",
               trackedLines: 4,
               survivingLines: 1,
               survivalRate: 0.25,
@@ -69,7 +79,8 @@ describe("renderMarkdown", () => {
     const markdown = renderMarkdown(report);
 
     expect(markdown).toContain("Highest 30-day file turnover");
-    expect(markdown).toContain("| `src/index.ts` | 4 | 1 | 75.0% |");
+    expect(markdown).toContain("| source | 4 | 1 | 75.0% |");
+    expect(markdown).toContain("| `src/index.ts` | source | 4 | 1 | 75.0% |");
     expect(markdown.match(/fix tracked behavior/g)).toHaveLength(1);
   });
 });

@@ -2,11 +2,50 @@ import type {
   DurabilityReport,
   HorizonResult,
   LineIdentity,
+  FileCategory,
   PullRequestMetadata,
 } from "./types.js";
 import { GitRepository } from "./git.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function classifyPath(path: string): FileCategory {
+  const lower = path.toLowerCase();
+  const name = lower.split("/").at(-1) ?? lower;
+  if (
+    lower.startsWith(".calkit/notebooks/executed/") ||
+    lower.startsWith(".calkit/runs/") ||
+    lower.startsWith("results/") ||
+    lower.includes("/generated/") ||
+    lower.includes("/dist/") ||
+    lower.includes("/coverage/") ||
+    name === "dvc.lock"
+  ) {
+    return "generated";
+  }
+  if (
+    lower.startsWith("docs/") ||
+    lower.startsWith(".ai/") ||
+    /\.(?:md|mdx|rst|adoc)$/.test(lower)
+  ) {
+    return "documentation";
+  }
+  if (
+    /(^|\/)(?:test|tests|__tests__)(\/|$)/.test(lower) ||
+    /(?:^|\.)test\.[^.]+$/.test(name) ||
+    /(?:^|\.)spec\.[^.]+$/.test(name)
+  ) {
+    return "test";
+  }
+  if (
+    lower.startsWith(".github/") ||
+    /\.(?:ya?ml|toml|ini|properties)$/.test(lower) ||
+    ["dockerfile", "makefile", "package-lock.json", "yarn.lock", "pnpm-lock.yaml"].includes(name)
+  ) {
+    return "configuration";
+  }
+  return "source";
+}
 
 export interface AnalyzeOptions {
   horizons?: number[];
@@ -113,6 +152,7 @@ export async function analyzePullRequest(
         const survivalRate = lines.size === 0 ? 1 : survivingLines / lines.size;
         return {
           path,
+          category: classifyPath(path),
           trackedLines: lines.size,
           survivingLines,
           survivalRate,
@@ -125,6 +165,37 @@ export async function analyzePullRequest(
           right.trackedLines - left.trackedLines ||
           left.path.localeCompare(right.path),
       );
+    const categoryTotals = new Map<
+      FileCategory,
+      { trackedLines: number; survivingLines: number }
+    >();
+    for (const file of files) {
+      const total = categoryTotals.get(file.category) ?? {
+        trackedLines: 0,
+        survivingLines: 0,
+      };
+      total.trackedLines += file.trackedLines;
+      total.survivingLines += file.survivingLines;
+      categoryTotals.set(file.category, total);
+    }
+    const categories = [...categoryTotals.entries()]
+      .map(([category, total]) => {
+        const survivalRate =
+          total.trackedLines === 0
+            ? 1
+            : total.survivingLines / total.trackedLines;
+        return {
+          category,
+          ...total,
+          survivalRate,
+          turnoverRate: 1 - survivalRate,
+        };
+      })
+      .sort(
+        (left, right) =>
+          right.trackedLines - left.trackedLines ||
+          left.category.localeCompare(right.category),
+      );
 
     horizonResults.push({
       days,
@@ -136,6 +207,7 @@ export async function analyzePullRequest(
       survivalRate,
       turnoverRate: 1 - survivalRate,
       files,
+      categories,
       ...signals,
     });
   }
@@ -155,6 +227,7 @@ export async function analyzePullRequest(
       "Likely follow-up fixes are inferred from commit subjects and require human interpretation.",
       "The analyzer measures committed Git history and does not attempt probabilistic AI-code detection.",
       "If the original base branch was deleted, the analyzer follows the current remote default branch or local HEAD.",
+      "File categories are inferred from paths and extensions; they provide context but may be overridden by repository conventions.",
     ],
   };
 }

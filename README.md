@@ -4,6 +4,10 @@ AfterMerge is an early proof for measuring what happens to a pull request after 
 
 The tool deliberately calls the metric **turnover**, not defects. Deleted code can be a regression, a cleanup, or a successful temporary migration. The surrounding signals provide context; they do not replace engineering judgment.
 
+> **Use coding agents regularly?** AfterMerge is selecting five teams for a
+> [free read-only design-partner pilot](docs/DESIGN-PARTNER.md). No source upload,
+> LLM runtime, or hosted account is required.
+
 ## Current proof
 
 - Reads merged pull-request metadata from GitHub's REST API.
@@ -12,6 +16,8 @@ The tool deliberately calls the metric **turnover**, not defects. Deleted code c
 - Uses zero-context Git diffs to identify added line ranges.
 - Uses Git blame identities to measure same-file survival.
 - Produces Markdown or versioned JSON.
+- Breaks turnover down by file and inferred source, test, configuration,
+  documentation, and generated categories.
 - Does not use an LLM or upload prompts and local agent logs.
 
 ## Run locally
@@ -90,6 +96,10 @@ repositories. It tracked 34,048 non-blank added lines, with 83.4% weighted
 of its tracked lines at 30 days. Read the
 [full validation report](validation/2026-07-12-public-history.md), including the
 measurement risks and the high-turnover cases that still need manual audit.
+The subsequent
+[high-turnover audit](validation/2026-07-12-high-turnover-audit.md) found that
+the two 100% cases were documentation/process changes and that generated
+pipeline outputs explained nearly all MDOcean turnover.
 
 ## Product gate
 

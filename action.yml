@@ -1,0 +1,53 @@
+name: AfterMerge durability report
+description: Measure the 7-day and 30-day survival of lines introduced by a merged pull request.
+author: AfterMerge
+
+branding:
+  icon: activity
+  color: purple
+
+inputs:
+  pull-request:
+    description: Optional merged pull-request number. Omit to discover recent agent PRs.
+    required: false
+  since-days:
+    description: Discovery window used when pull-request is omitted.
+    required: false
+    default: "90"
+  authors:
+    description: Comma-separated GitHub logins treated as coding agents.
+    required: false
+    default: "Copilot,copilot-swe-agent[bot],openai-codex[bot],devin-ai-integration[bot],sweep-ai[bot]"
+  limit:
+    description: Maximum pull requests per portfolio report.
+    required: false
+    default: "10"
+  github-token:
+    description: Read-only GitHub token used for pull-request metadata.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Analyze post-merge durability
+      shell: bash
+      env:
+        AFTERMERGE_PR: ${{ inputs.pull-request }}
+        AFTERMERGE_SINCE_DAYS: ${{ inputs.since-days }}
+        AFTERMERGE_AUTHORS: ${{ inputs.authors }}
+        AFTERMERGE_LIMIT: ${{ inputs.limit }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        report="${RUNNER_TEMP}/aftermerge-report.md"
+        if [ -n "${AFTERMERGE_PR}" ]; then
+          node "${GITHUB_ACTION_PATH}/dist/cli.js" analyze "${GITHUB_REPOSITORY}" \
+            --pr "${AFTERMERGE_PR}" --local "${GITHUB_WORKSPACE}" > "${report}"
+        else
+          node "${GITHUB_ACTION_PATH}/dist/cli.js" scan "${GITHUB_REPOSITORY}" \
+            --local "${GITHUB_WORKSPACE}" --since-days "${AFTERMERGE_SINCE_DAYS}" \
+            --authors "${AFTERMERGE_AUTHORS}" --limit "${AFTERMERGE_LIMIT}" > "${report}"
+        fi
+        cat "${report}"
+        if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+          cat "${report}" >> "${GITHUB_STEP_SUMMARY}"
+        fi

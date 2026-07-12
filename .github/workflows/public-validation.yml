@@ -1,0 +1,119 @@
+name: Public history validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/public-validation.yml
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: ${{ matrix.repository }}#${{ matrix.pull-request }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - id: json-gotti-1
+            repository: Smidjehoien/json-gotti-maccaevelli
+            pull-request: 1
+          - id: mdocean-203
+            repository: symbiotic-engineering/MDOcean
+            pull-request: 203
+          - id: mdocean-227
+            repository: symbiotic-engineering/MDOcean
+            pull-request: 227
+          - id: stillwater-809
+            repository: sydlexius/stillwater
+            pull-request: 809
+          - id: hotspotadb-5
+            repository: cbkii/hotspotadb
+            pull-request: 5
+          - id: korean-fortune-4
+            repository: nanamix/korean-fortune-system
+            pull-request: 4
+          - id: supremeai-14
+            repository: paykaribazaronline/supremeai
+            pull-request: 14
+          - id: supremeai-18
+            repository: paykaribazaronline/supremeai
+            pull-request: 18
+          - id: container-compose-98
+            repository: Mcrich23/Container-Compose
+            pull-request: 98
+          - id: scheduling-calendar-26
+            repository: uwctri/SchedulingCalendar
+            pull-request: 26
+          - id: frontend-next-5
+            repository: unhurried/frontend-example-next
+            pull-request: 5
+          - id: evolver-1
+            repository: OmniQuestMedia/Evolver
+            pull-request: 1
+          - id: levelup-3
+            repository: JGtm/LevelUp
+            pull-request: 3
+          - id: levelup-19
+            repository: JGtm/LevelUp
+            pull-request: 19
+          - id: iobroker-5959
+            repository: ioBroker/ioBroker.repositories
+            pull-request: 5959
+          - id: iobroker-5968
+            repository: ioBroker/ioBroker.repositories
+            pull-request: 5968
+          - id: handbook-1
+            repository: nicograef/handbook
+            pull-request: 1
+          - id: handbook-4
+            repository: nicograef/handbook
+            pull-request: 4
+          - id: handbook-5
+            repository: nicograef/handbook
+            pull-request: 5
+          - id: fuzzy-waddle-458
+            repository: JernejHabjan/fuzzy-waddle
+            pull-request: 458
+
+    steps:
+      - name: Check out AfterMerge
+        uses: actions/checkout@v4
+        with:
+          path: aftermerge
+
+      - name: Check out target history
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repository }}
+          fetch-depth: 0
+          path: target
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Analyze pull request
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node aftermerge/dist/cli.js analyze "${{ matrix.repository }}" \
+            --pr "${{ matrix.pull-request }}" --local target --json > report.json
+          node aftermerge/dist/cli.js analyze "${{ matrix.repository }}" \
+            --pr "${{ matrix.pull-request }}" --local target > report.md
+          cat report.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: aftermerge-${{ matrix.id }}
+          path: |
+            report.json
+            report.md
+          retention-days: 30

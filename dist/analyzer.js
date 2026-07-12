@@ -28,6 +28,12 @@ export async function analyzePullRequest(repository, pullRequest, options = {}) 
             line.content.trim().length > 0);
     });
     const uniqueTracked = new Map(tracked.map((line) => [identityKey(line), line]));
+    const trackedByPath = new Map();
+    for (const [key, line] of uniqueTracked) {
+        const lines = trackedByPath.get(line.path) ?? new Map();
+        lines.set(key, line);
+        trackedByPath.set(line.path, lines);
+    }
     const mergedAt = new Date(pullRequest.mergedAt);
     const horizonResults = [];
     for (const days of horizons) {
@@ -45,14 +51,34 @@ export async function analyzePullRequest(repository, pullRequest, options = {}) 
         }
         const targetCommit = await repository.commitAtOrBefore(resolvedHead, targetDate, baseline);
         const targetIdentities = new Set();
+        const targetByPath = new Map();
         for (const path of trackedFiles) {
+            const identities = new Set();
             for (const identity of await repository.blame(targetCommit, path)) {
-                targetIdentities.add(identityKey(identity));
+                const key = identityKey(identity);
+                targetIdentities.add(key);
+                identities.add(key);
             }
+            targetByPath.set(path, identities);
         }
         const survivingLines = [...uniqueTracked.keys()].filter((key) => targetIdentities.has(key)).length;
         const survivalRate = uniqueTracked.size === 0 ? 1 : survivingLines / uniqueTracked.size;
         const signals = await repository.signals(baseline, targetCommit, trackedFiles, [baseline, ...pullRequest.commitShas]);
+        const files = [...trackedByPath.entries()]
+            .map(([path, lines]) => {
+            const survivingLines = [...lines.keys()].filter((key) => targetByPath.get(path)?.has(key)).length;
+            const survivalRate = lines.size === 0 ? 1 : survivingLines / lines.size;
+            return {
+                path,
+                trackedLines: lines.size,
+                survivingLines,
+                survivalRate,
+                turnoverRate: 1 - survivalRate,
+            };
+        })
+            .sort((left, right) => right.turnoverRate - left.turnoverRate ||
+            right.trackedLines - left.trackedLines ||
+            left.path.localeCompare(right.path));
         horizonResults.push({
             days,
             status: "ready",
@@ -62,11 +88,12 @@ export async function analyzePullRequest(repository, pullRequest, options = {}) 
             survivingLines,
             survivalRate,
             turnoverRate: 1 - survivalRate,
+            files,
             ...signals,
         });
     }
     return {
-        schemaVersion: 1,
+        schemaVersion: 2,
         generatedAt: now.toISOString(),
         pullRequest,
         baselineCommit: baseline,

@@ -156,6 +156,13 @@ describe("analyzePullRequest", () => {
       expect(horizon.likelyFixes.map((signal) => signal.subject)).toContain(
         "fix regression in agent feature",
       );
+      expect(horizon.files).toEqual([
+        expect.objectContaining({
+          path: "index.ts",
+          trackedLines: 3,
+          survivingLines: 1,
+        }),
+      ]);
     }
   });
 

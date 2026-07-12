@@ -12,16 +12,34 @@ function horizonRow(horizon: HorizonResult): string {
 }
 
 export function renderMarkdown(report: DurabilityReport): string {
+  const seenSignals = new Set<string>();
   const signalLines = report.horizons.flatMap((horizon) => [
-    ...horizon.explicitReverts.map(
-      (signal) =>
+    ...horizon.explicitReverts.flatMap((signal) => {
+      const key = `revert:${signal.sha}`;
+      if (seenSignals.has(key)) return [];
+      seenSignals.add(key);
+      return [
         `- **Explicit revert by day ${horizon.days}:** \`${signal.sha.slice(0, 8)}\` ${signal.subject}`,
-    ),
-    ...horizon.likelyFixes.map(
-      (signal) =>
-        `- **Possible follow-up fix by day ${horizon.days}:** \`${signal.sha.slice(0, 8)}\` ${signal.subject}`,
-    ),
+      ];
+    }),
+    ...horizon.likelyFixes.flatMap((signal) => {
+      const key = `fix:${signal.sha}`;
+      if (seenSignals.has(key)) return [];
+      seenSignals.add(key);
+      return [
+        `- **Fix-labeled commit touching a tracked file by day ${horizon.days}:** \`${signal.sha.slice(0, 8)}\` ${signal.subject}`,
+      ];
+    }),
   ]);
+  const shownSignals = signalLines.slice(0, 10);
+  if (signalLines.length > shownSignals.length) {
+    shownSignals.push(`- ${signalLines.length - shownSignals.length} additional context signals are available in JSON output.`);
+  }
+
+  const fileTurnover = report.horizons
+    .find((horizon) => horizon.days === 30 && horizon.status === "ready")
+    ?.files?.filter((file) => file.turnoverRate > 0)
+    .slice(0, 10);
 
   return [
     `# AfterMerge report: ${report.pullRequest.repository}#${report.pullRequest.number}`,
@@ -35,9 +53,24 @@ export function renderMarkdown(report: DurabilityReport): string {
     "| --- | --- | ---: | ---: | ---: | ---: |",
     ...report.horizons.map(horizonRow),
     "",
+    ...(fileTurnover && fileTurnover.length > 0
+      ? [
+          "## Highest 30-day file turnover",
+          "",
+          "| File | Tracked lines | Surviving lines | Turnover |",
+          "| --- | ---: | ---: | ---: |",
+          ...fileTurnover.map(
+            (file) =>
+              `| \`${file.path.replace(/\|/g, "\\|")}\` | ${file.trackedLines} | ${file.survivingLines} | ${percent(file.turnoverRate)} |`,
+          ),
+          "",
+        ]
+      : []),
     "## Context signals",
     "",
-    ...(signalLines.length > 0 ? signalLines : ["No explicit reverts or likely follow-up fixes detected."]),
+    ...(shownSignals.length > 0
+      ? shownSignals
+      : ["No explicit reverts or fix-labeled commits touching tracked files were detected."]),
     "",
     "## Interpretation limits",
     "",

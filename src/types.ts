@@ -33,6 +33,14 @@ export interface CommitSignal {
   committedAt: string;
 }
 
+export interface FileHorizonResult {
+  path: string;
+  trackedLines: number;
+  survivingLines: number;
+  survivalRate: number;
+  turnoverRate: number;
+}
+
 export interface HorizonResult {
   days: number;
   status: "ready" | "pending";
@@ -44,10 +52,11 @@ export interface HorizonResult {
   turnoverRate?: number;
   explicitReverts: CommitSignal[];
   likelyFixes: CommitSignal[];
+  files?: FileHorizonResult[];
 }
 
 export interface DurabilityReport {
-  schemaVersion: 1;
+  schemaVersion: 2;
   generatedAt: string;
   pullRequest: PullRequestMetadata;
   baselineCommit: string;

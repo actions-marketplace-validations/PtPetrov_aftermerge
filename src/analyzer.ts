@@ -55,6 +55,12 @@ export async function analyzePullRequest(
   });
 
   const uniqueTracked = new Map(tracked.map((line) => [identityKey(line), line]));
+  const trackedByPath = new Map<string, Map<string, LineIdentity>>();
+  for (const [key, line] of uniqueTracked) {
+    const lines = trackedByPath.get(line.path) ?? new Map<string, LineIdentity>();
+    lines.set(key, line);
+    trackedByPath.set(line.path, lines);
+  }
   const mergedAt = new Date(pullRequest.mergedAt);
   const horizonResults: HorizonResult[] = [];
 
@@ -78,10 +84,15 @@ export async function analyzePullRequest(
       baseline,
     );
     const targetIdentities = new Set<string>();
+    const targetByPath = new Map<string, Set<string>>();
     for (const path of trackedFiles) {
+      const identities = new Set<string>();
       for (const identity of await repository.blame(targetCommit, path)) {
-        targetIdentities.add(identityKey(identity));
+        const key = identityKey(identity);
+        targetIdentities.add(key);
+        identities.add(key);
       }
+      targetByPath.set(path, identities);
     }
     const survivingLines = [...uniqueTracked.keys()].filter((key) =>
       targetIdentities.has(key),
@@ -94,6 +105,26 @@ export async function analyzePullRequest(
       trackedFiles,
       [baseline, ...pullRequest.commitShas],
     );
+    const files = [...trackedByPath.entries()]
+      .map(([path, lines]) => {
+        const survivingLines = [...lines.keys()].filter((key) =>
+          targetByPath.get(path)?.has(key),
+        ).length;
+        const survivalRate = lines.size === 0 ? 1 : survivingLines / lines.size;
+        return {
+          path,
+          trackedLines: lines.size,
+          survivingLines,
+          survivalRate,
+          turnoverRate: 1 - survivalRate,
+        };
+      })
+      .sort(
+        (left, right) =>
+          right.turnoverRate - left.turnoverRate ||
+          right.trackedLines - left.trackedLines ||
+          left.path.localeCompare(right.path),
+      );
 
     horizonResults.push({
       days,
@@ -104,12 +135,13 @@ export async function analyzePullRequest(
       survivingLines,
       survivalRate,
       turnoverRate: 1 - survivalRate,
+      files,
       ...signals,
     });
   }
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: now.toISOString(),
     pullRequest,
     baselineCommit: baseline,

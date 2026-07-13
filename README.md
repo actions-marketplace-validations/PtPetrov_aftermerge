@@ -48,36 +48,63 @@ JSON output:
 npm run dev -- analyze owner/repository --pr 123 --json
 ```
 
-## Run as a GitHub Action
+## Install in two minutes
 
-The proof ships as a composite action and writes its Markdown report to the
-workflow summary. With no pull-request input it discovers recent merged PRs
-from known coding-agent accounts. The checkout must include full history so the
-7-day and 30-day snapshots are available.
+Create `.github/workflows/aftermerge.yml` in the repository you want to measure
+and paste this complete workflow:
 
 ```yaml
+name: Weekly AfterMerge report
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
 permissions:
   contents: read
   pull-requests: read
 
-steps:
-  - uses: actions/checkout@v4
-    with:
-      fetch-depth: 0
-  - uses: PtPetrov/aftermerge@v0.1.0
-    with:
-      github-token: ${{ github.token }}
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: PtPetrov/aftermerge@v0.1.0
+        with:
+          github-token: ${{ github.token }}
 ```
 
-Put that job on a weekly `schedule` and the report is autonomous. Use the
-optional `pull-request` input for a one-off report. Agent author logins, lookback
-days, and report limit are configurable inputs.
+Run it once from the repository's **Actions** tab. AfterMerge discovers recent
+merged PRs from known coding-agent accounts and writes a Markdown report to the
+workflow summary. The scheduled run then repeats weekly without a hosted
+account or server.
+
+Use the optional `pull-request` input for a one-off report. Agent author logins,
+lookback days, and report limit are configurable inputs. The checkout keeps full
+history so the 7-day and 30-day snapshots are available.
 
 `v0.1.0` is the current design-partner release. `main` remains the development
 branch and may change the JSON schema during the proof stage.
 
 The action only asks for read access. It does not post comments or modify the
 repository.
+
+### What the first report shows
+
+| Horizon | Tracked lines | Surviving lines | Survival | Turnover |
+| --- | ---: | ---: | ---: | ---: |
+| 7 days | 423 | 140 | 33.1% | 66.9% |
+| 30 days | 423 | 23 | 5.4% | 94.6% |
+
+The report then identifies which files and categories explain the turnover and
+surfaces explicit reverts or limited follow-up context. This example is from
+one public validation PR; turnover is not a defect score.
+
+Teams merging at least ten coding-agent PRs per month can request a
+[free read-only pilot](https://github.com/PtPetrov/aftermerge/issues/new?template=design-partner.yml).
 
 ## What the result means
 
